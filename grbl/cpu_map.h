@@ -249,12 +249,96 @@
 
 #endif
 
-/*
-#ifdef CPU_MAP_CUSTOM_PROC
-  // For a custom pin map or different processor, copy and edit one of the available cpu
-  // map files and modify it to your needs. Make sure the defined name is also changed in
-  // the config.h file.
+#ifdef CPU_MAP_ATMEGA328P_4_AXIS
+// Define serial port pins and interrupt vectors.
+  #define SERIAL_RX     USART_RX_vect
+  #define SERIAL_UDRE   USART_UDRE_vect
+
+  // Define step pulse output pins. NOTE: All step bit pins must be on the same port.
+  #define STEP_DDR        DDRD
+  #define STEP_PORT       PORTD
+  #define X_STEP_BIT      2  // Uno Digital Pin 2
+  #define Y_STEP_BIT      3  // Uno Digital Pin 3
+  #define Z_STEP_BIT      4  // Uno Digital Pin 4
+  #define STEP_MASK       ((1<<X_STEP_BIT)|(1<<Y_STEP_BIT)|(1<<Z_STEP_BIT)) // All step bits
+
+  // Define step direction output pins. NOTE: All direction pins must be on the same port.
+  #define DIRECTION_DDR     DDRD
+  #define DIRECTION_PORT    PORTD
+  #define X_DIRECTION_BIT   5  // Uno Digital Pin 5
+  #define Y_DIRECTION_BIT   6  // Uno Digital Pin 6
+  #define Z_DIRECTION_BIT   7  // Uno Digital Pin 7
+  #define DIRECTION_MASK    ((1<<X_DIRECTION_BIT)|(1<<Y_DIRECTION_BIT)|(1<<Z_DIRECTION_BIT)) // All direction bits
+
+  // C Axis definition - Step and Dir to be in same port
+  #define C_DDR					DDRB
+  #define C_PORT				PORTB
+  #define C_STEP_PIN			4	// Uno Digital Pin 12	
+  #define C_DIR_PIN				5	// Uno Digital Pin 13 (NOTE: D13 can't be pulled-high input due to LED.)
+  #define C_STEP_BIT			0	// An empty bit in an 8-bit variable 
+  #define C_DIR_BIT				1	// The last empty bit. X_STEP_BIT to Z_DIR have occupied the rest!
+  //#define C_STEP_MASK			(1<<C_STEP_BIT)
+  //#define C_DIRECTION_MASK	(1<<C_DIRECTION_BIT)
+
+  // Define stepper driver enable/disable output pin.
+  #define STEPPERS_DISABLE_DDR    DDRB
+  #define STEPPERS_DISABLE_PORT   PORTB
+  #define STEPPERS_DISABLE_BIT    0  // Uno Digital Pin 8
+  #define STEPPERS_DISABLE_MASK   (1<<STEPPERS_DISABLE_BIT)
+
+  // Define homing/hard limit switch input pins and limit interrupt vectors.
+  // NOTE: All limit bit pins must be on the same port, but not on a port with other input pins (CONTROL).
+  #define LIMIT_DDR        DDRB
+  #define LIMIT_PIN        PINB
+  #define LIMIT_PORT       PORTB
+  #define X_LIMIT_BIT      1  // Uno Digital Pin 9
+  #define Y_LIMIT_BIT      2  // Uno Digital Pin 10
+  #define Z_LIMIT_BIT      3  // Uno Digital Pin 11
+  #define LIMIT_MASK       ((1<<X_LIMIT_BIT)|(1<<Y_LIMIT_BIT)|(1<<Z_LIMIT_BIT)) // All limit bits
+  #define LIMIT_INT        PCIE0  // Pin change interrupt enable pin
+  #define LIMIT_INT_vect   PCINT0_vect
+  #define LIMIT_PCMSK      PCMSK0 // Pin change interrupt register
+
+  // Define user-control controls (cycle start, reset, feed hold) input pins.
+  // NOTE: All CONTROLs pins must be on the same port and not on a port with other input pins (limits).
+  #define CONTROL_DDR       DDRC
+  #define CONTROL_PIN       PINC
+  #define CONTROL_PORT      PORTC
+  #define CONTROL_RESET_BIT         0  // Uno Analog Pin 0
+  #define CONTROL_FEED_HOLD_BIT     1  // Uno Analog Pin 1
+  #define CONTROL_CYCLE_START_BIT   2  // Uno Analog Pin 2
+  #define CONTROL_SAFETY_DOOR_BIT   1  // Uno Analog Pin 1 NOTE: Safety door is shared with feed hold. Enabled by config define.
+  #define CONTROL_INT       PCIE1  // Pin change interrupt enable pin
+  #define CONTROL_INT_vect  PCINT1_vect
+  #define CONTROL_PCMSK     PCMSK1 // Pin change interrupt register
+  #define CONTROL_MASK      ((1<<CONTROL_RESET_BIT)|(1<<CONTROL_FEED_HOLD_BIT)|(1<<CONTROL_CYCLE_START_BIT)|(1<<CONTROL_SAFETY_DOOR_BIT))
+  #define CONTROL_INVERT_MASK   CONTROL_MASK // May be re-defined to only invert certain control pins.
+
+	// Define spindle enable output pin.
+	// NOTE: Spindle enable moved from D12 to A3 (old coolant flood enable pin). Spindle direction pin is dummy as below.
+	#define SPINDLE_ENABLE_DDR		DDRC
+	#define SPINDLE_ENABLE_PORT		PORTC
+	#define SPINDLE_ENABLE_BIT		3  // Uno Analog Pin 3
+
+	// dummy pin for compilation only
+    #define SPINDLE_DIRECTION_DDR   DDRC
+    #define SPINDLE_DIRECTION_PORT  PORTC
+    #define SPINDLE_DIRECTION_BIT   3  // we dont use it anyway
+
+
+	// Define coolant enable output pins.
+	// NOTE: Coolant flood moved from A3 to A4. Coolant mist not supported
+	#define COOLANT_FLOOD_DDR		DDRC
+	#define COOLANT_FLOOD_PORT		PORTC
+	#define COOLANT_FLOOD_BIT		4  // Uno Analog Pin 4
+
+	// Define probe switch input pin.
+	#define PROBE_DDR				DDRC
+	#define PROBE_PIN				PINC
+	#define PROBE_PORT				PORTC
+	#define PROBE_BIT				5  // Uno Analog Pin 5
+	#define PROBE_MASK				(1<<PROBE_BIT)
+
 #endif
-*/
 
 #endif

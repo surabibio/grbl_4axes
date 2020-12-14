@@ -28,10 +28,11 @@
 #define SOME_LARGE_VALUE 1.0E+38
 
 // Axis array index values. Must start with 0 and be continuous.
-#define N_AXIS 3 // Number of axes
+#define N_AXIS 4 // Number of axes
 #define X_AXIS 0 // Axis indexing value.
 #define Y_AXIS 1
 #define Z_AXIS 2
+#define C_AXIS 3
 // #define A_AXIS 3
 
 // CoreXY motor assignments. DO NOT ALTER.

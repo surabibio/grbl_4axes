@@ -100,8 +100,9 @@ typedef struct {
   // Used by the bresenham line algorithm
   uint32_t counter_x,        // Counter variables for the bresenham line tracer
            counter_y,
-           counter_z;
-  #ifdef STEP_PULSE_DELAY
+           counter_z,
+           counter_c;		// C Axis
+#ifdef STEP_PULSE_DELAY
     uint8_t step_bits;  // Stores out_bits output to complete the step pulse delay
   #endif
 
@@ -322,6 +323,9 @@ ISR(TIMER1_COMPA_vect)
 
   // Set the direction pins a couple of nanoseconds before we step the steppers
   DIRECTION_PORT = (DIRECTION_PORT & ~DIRECTION_MASK) | (st.dir_outbits & DIRECTION_MASK);
+  #ifdef ENABLE_C_AXIS
+    C_PORT = st.dir_outbits & (1<<C_DIR_BIT) ? C_PORT | (1<<C_DIR_PIN) : C_PORT & (uint8_t)~(1<<C_DIR_PIN);  
+  #endif
   #ifdef ENABLE_DUAL_AXIS
     DIRECTION_PORT_DUAL = (DIRECTION_PORT_DUAL & ~DIRECTION_MASK_DUAL) | (st.dir_outbits_dual & DIRECTION_MASK_DUAL);
   #endif
@@ -333,7 +337,10 @@ ISR(TIMER1_COMPA_vect)
       st.step_bits_dual = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | st.step_outbits_dual;
     #endif
   #else  // Normal operation
-    STEP_PORT = (STEP_PORT & ~STEP_MASK) | st.step_outbits;
+    STEP_PORT = (STEP_PORT & ~STEP_MASK) | (st.step_outbits & STEP_MASK);
+    #ifdef ENABLE_C_AXIS
+		C_PORT = st.step_outbits & (1<<C_STEP_BIT) ? C_PORT | (1<<C_STEP_PIN) : C_PORT & (uint8_t)~(1<<C_STEP_PIN);  
+    #endif
     #ifdef ENABLE_DUAL_AXIS
       STEP_PORT_DUAL = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | st.step_outbits_dual;
     #endif
@@ -370,7 +377,7 @@ ISR(TIMER1_COMPA_vect)
         st.exec_block = &st_block_buffer[st.exec_block_index];
 
         // Initialize Bresenham line and distance counters
-        st.counter_x = st.counter_y = st.counter_z = (st.exec_block->step_event_count >> 1);
+        st.counter_x = st.counter_y = st.counter_z = st.counter_c = (st.exec_block->step_event_count >> 1);
       }
       st.dir_outbits = st.exec_block->direction_bits ^ dir_port_invert_mask;
       #ifdef ENABLE_DUAL_AXIS
@@ -382,6 +389,7 @@ ISR(TIMER1_COMPA_vect)
         st.steps[X_AXIS] = st.exec_block->steps[X_AXIS] >> st.exec_segment->amass_level;
         st.steps[Y_AXIS] = st.exec_block->steps[Y_AXIS] >> st.exec_segment->amass_level;
         st.steps[Z_AXIS] = st.exec_block->steps[Z_AXIS] >> st.exec_segment->amass_level;
+        st.steps[C_AXIS] = st.exec_block->steps[C_AXIS] >> st.exec_segment->amass_level;
       #endif
 
       #ifdef VARIABLE_SPINDLE
@@ -451,6 +459,17 @@ ISR(TIMER1_COMPA_vect)
     if (st.exec_block->direction_bits & (1<<Z_DIRECTION_BIT)) { sys_position[Z_AXIS]--; }
     else { sys_position[Z_AXIS]++; }
   }
+  #ifdef ADAPTIVE_MULTI_AXIS_STEP_SMOOTHING
+    st.counter_c += st.steps[C_AXIS];
+  #else
+    st.counter_c += st.exec_block->steps[C_AXIS];
+  #endif
+  if (st.counter_c > st.exec_block->step_event_count) {
+    st.step_outbits |= (1<<C_STEP_BIT);
+    st.counter_c -= st.exec_block->step_event_count;
+    if (st.exec_block->direction_bits & (1<<C_DIR_BIT)) { sys_position[C_AXIS]--; }
+    else { sys_position[C_AXIS]++; }
+  }
 
   // During a homing cycle, lock out and prevent desired axes from moving.
   if (sys.state == STATE_HOMING) { 
@@ -490,6 +509,9 @@ ISR(TIMER0_OVF_vect)
 {
   // Reset stepping pins (leave the direction pins)
   STEP_PORT = (STEP_PORT & ~STEP_MASK) | (step_port_invert_mask & STEP_MASK);
+  #ifdef ENABLE_C_AXIS
+    C_PORT = step_port_invert_mask & (1<<C_STEP_BIT) ? 	C_PORT | (1<<C_STEP_PIN) : 	C_PORT & (uint8_t) ~(1<<C_STEP_PIN);
+  #endif
   #ifdef ENABLE_DUAL_AXIS
     STEP_PORT_DUAL = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | (step_port_invert_mask_dual & STEP_MASK_DUAL);
   #endif
@@ -503,7 +525,10 @@ ISR(TIMER0_OVF_vect)
   // st_wake_up() routine.
   ISR(TIMER0_COMPA_vect)
   {
-    STEP_PORT = st.step_bits; // Begin step pulse.
+    STEP_PORT = st.step_bits & STEP_MASK; // Begin step pulse.
+    #ifdef ENABLE_C_AXIS
+      C_PORT = st.step_bits & C_STEP_BIT ? C_PORT | (1<<C_STEP_PIN) :  C_PORT & (uint8_t) ~(1<<C_STEP_PIN);
+    #endif
     #ifdef ENABLE_DUAL_AXIS
       STEP_PORT_DUAL = st.step_bits_dual;
     #endif
@@ -551,9 +576,13 @@ void st_reset()
   st.dir_outbits = dir_port_invert_mask; // Initialize direction bits to default.
 
   // Initialize step and direction port pins.
-  STEP_PORT = (STEP_PORT & ~STEP_MASK) | step_port_invert_mask;
-  DIRECTION_PORT = (DIRECTION_PORT & ~DIRECTION_MASK) | dir_port_invert_mask;
+  STEP_PORT = (STEP_PORT & ~STEP_MASK) | (step_port_invert_mask & STEP_MASK);
+  DIRECTION_PORT = (DIRECTION_PORT & ~DIRECTION_MASK) | (dir_port_invert_mask & DIRECTION_MASK);
   
+  #ifdef ENABLE_C_AXIS
+	C_PORT = step_port_invert_mask & (1<<C_STEP_BIT) ? C_PORT | (1<<C_STEP_PIN) : C_PORT & (uint8_t)~(1<<C_STEP_PIN);  
+    C_PORT = dir_port_invert_mask  & (1<<C_DIR_BIT)  ? C_PORT | (1<<C_DIR_PIN) : C_PORT & (uint8_t)~(1<<C_DIR_PIN);  
+  #endif
   #ifdef ENABLE_DUAL_AXIS
     st.dir_outbits_dual = dir_port_invert_mask_dual;
     STEP_PORT_DUAL = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | step_port_invert_mask_dual;
@@ -570,6 +599,10 @@ void stepper_init()
   STEPPERS_DISABLE_DDR |= 1<<STEPPERS_DISABLE_BIT;
   DIRECTION_DDR |= DIRECTION_MASK;
   
+  #ifdef ENABLE_C_AXIS
+    C_DDR |= (1<<C_STEP_PIN);
+    C_DDR |= (1<<C_DIR_PIN);
+  #endif
   #ifdef ENABLE_DUAL_AXIS
     STEP_DDR_DUAL |= STEP_MASK_DUAL;
     DIRECTION_DDR_DUAL |= DIRECTION_MASK_DUAL;

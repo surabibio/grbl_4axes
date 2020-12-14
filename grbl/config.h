@@ -684,7 +684,14 @@
    below.
 */
 
+  #undef  CPU_MAP_ATMEGA328P	// C axis is mapped here. Hence disable
+  #undef  VARIABLE_SPINDLE		// C axis is mapped here. Hence disable
+
+  #define CPU_MAP_ATMEGA328P_4_AXIS		// For OpenPnP
+  #define ENABLE_C_AXIS					// For OpenPnP
+
 // Paste CPU_MAP definitions here.
+
 
 // Paste default settings definitions here.
 
