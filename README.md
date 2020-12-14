@@ -2,7 +2,8 @@ This is fork of Grbl for OpenPnP from
 GRBL_VERSION "1.1h"
 GRBL_VERSION_BUILD "20190830"
 
----- Hardware ----
+-------------
+Hardware
 This runs on a plain Arduino Uno (with a atmega328p Device).
 It supports a 4th  axis: the C_AXIS
 
