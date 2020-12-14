@@ -18,7 +18,7 @@ Hence with minimal hardware rewiring you should get your 3-Axis Desktop Mill tha
 
 Supports all G-Codes as in Grbl v1.1 with:
  - Additiona Non-Command Word: C
-
+ 
 -------------
 This work is an integration of Bob Beattie's OpenPnP-Grbl with the Offical Grbl
 While Bob Beattie's port runs on AtMega2560 this runs on Arduino Uno with Atmega328p
