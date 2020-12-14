@@ -1,6 +1,4 @@
-This is fork of Grbl for OpenPnP from 
-GRBL_VERSION "1.1h"
-GRBL_VERSION_BUILD "20190830"
+This is fork of Grbl for OpenPnP fromGRBL_VERSION "1.1h"GRBL_VERSION_BUILD "20190830"
 
 -------------
 Hardware
