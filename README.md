@@ -1,4 +1,5 @@
-This is fork of Grbl for OpenPnP from
+This is the very first grbl fork for my Japanese Desktop Mill that was repurposed to do pick and place.
+Was forked from
 
 GRBL_VERSION "1.1h"
 
