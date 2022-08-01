@@ -1,4 +1,10 @@
 This is the very first grbl fork for my Japanese Desktop Mill that was repurposed to do pick and place.
+
+
+
+https://user-images.githubusercontent.com/26599790/182065897-c6dc28bf-3cb0-46b9-8eaa-a387a9f45d7a.mp4
+
+
 Was forked from
 
 GRBL_VERSION "1.1h"
